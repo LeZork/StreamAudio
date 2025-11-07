@@ -160,28 +160,29 @@ class MulticastAudioReceiverGUI:
         """Настройка multicast приемника"""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+    
         port = int(self.port_var.get())
         self.sock.bind(('', port))
-        
+    
         multicast_group = self.group_var.get()
         group = socket.inet_aton(multicast_group)
         mreq = struct.pack('4sL', group, socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
-        self.sock.settimeout(1.0)
+    
+        # Увеличиваем буфер и уменьшаем таймаут
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 131072)  # Увеличили буфер
+        self.sock.settimeout(0.1)  # Уменьшили таймаут
     
     def audio_output_callback(self, outdata, frames, time, status):
         """Callback для вывода аудио"""
         if self.running:
             try:
-                # Получаем данные из очереди
+                # Получаем данные из очереди с таймаутом
                 audio_data = self.audio_queue.get_nowait()
-                
+            
                 # Конвертируем байты напрямую в numpy array (int16)
                 audio_array = np.frombuffer(audio_data, dtype=np.int16)
-                
+            
                 # Решейпим для стерео вывода
                 if len(audio_array) >= frames * CHANNELS:
                     audio_array = audio_array[:frames * CHANNELS].reshape(-1, CHANNELS)
@@ -189,7 +190,7 @@ class MulticastAudioReceiverGUI:
                 else:
                     # Если данных недостаточно, заполняем нулями
                     outdata.fill(0)
-                    
+                
             except queue.Empty:
                 outdata.fill(0)
             except Exception as e:

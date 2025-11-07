@@ -13,7 +13,7 @@ except ImportError:
     SOUNDDEVICE_AVAILABLE = False
 
 # КОНСИСТЕНТНЫЕ НАСТРОЙКИ - ДОЛЖНЫ СОВПАДАТЬ С КЛИЕНТОМ
-CHUNK = 1024  # Увеличиваем для стабильности
+CHUNK = 512  # Увеличиваем для стабильности
 RATE = 44100  # Стандартная частота
 CHANNELS = 2  # Стерео
 FORMAT = 'int16'  # Единый формат
@@ -229,13 +229,18 @@ class GameAudioStreamServer:
         if self.running:
             # Используем данные напрямую (уже в int16)
             audio_data = indata.tobytes()
-            self.audio_queue.put(audio_data)
+            try:
+                # Неблокирующая запись в очередь
+                self.audio_queue.put_nowait(audio_data)
+            except queue.Full:
+                # Если очередь переполнена, пропускаем пакет для уменьшения задержки
+                pass
     
     def send_audio_data(self):
         """Отправка аудио данных"""
         while self.running:
             try:
-                audio_data = self.audio_queue.get(timeout=1.0)
+                audio_data = self.audio_queue.get(timeout=0.1)
                 self.sock.sendto(audio_data, (self.group_var.get(), int(self.port_var.get())))
                 self.packet_count += 1
             except queue.Empty:
