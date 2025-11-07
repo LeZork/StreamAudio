@@ -44,15 +44,7 @@ class GameAudioStreamServer:
         
     def setup_gui(self):
         """Настройка GUI для игрового стриминга"""
-        self.root.title("🎮 Game Audio Stream Server")
-        self.root.geometry("600x700")
-        self.root.configure(bg='#1e1e2e')
-        
-        # Настройка стилей
-        style = ttk.Style()
-        style.theme_use('clam')
-        
-        # Цветовая схема
+        # Цветовая схема (определяем сначала)
         bg_color = '#1e1e2e'
         fg_color = '#cdd6f4'
         accent_color = '#89b4fa'
@@ -60,20 +52,29 @@ class GameAudioStreamServer:
         warning_color = '#f9e2af'
         error_color = '#f38ba8'
         
+        self.root.title("🎮 Game Audio Stream Server")
+        self.root.geometry("700x600")
+        self.root.minsize(650, 550)
+        self.root.configure(bg=bg_color)
+        
         # Настройка стилей
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        # Настройка стилей (компактные)
         style.configure('Title.TLabel', background=bg_color, foreground=accent_color, 
-                       font=('Segoe UI', 16, 'bold'))
+                       font=('Segoe UI', 14, 'bold'))
         style.configure('Header.TLabel', background=bg_color, foreground=fg_color, 
-                       font=('Segoe UI', 10, 'bold'))
-        style.configure('Info.TLabel', background=bg_color, foreground=success_color, 
-                       font=('Segoe UI', 9))
-        style.configure('Status.TLabel', background=bg_color, foreground=accent_color, 
                        font=('Segoe UI', 9, 'bold'))
+        style.configure('Info.TLabel', background=bg_color, foreground=success_color, 
+                       font=('Segoe UI', 8))
+        style.configure('Status.TLabel', background=bg_color, foreground=accent_color, 
+                       font=('Segoe UI', 8, 'bold'))
         style.configure('TLabelFrame', background=bg_color, foreground=accent_color, 
-                       font=('Segoe UI', 9, 'bold'), borderwidth=2)
+                       font=('Segoe UI', 8, 'bold'), borderwidth=1)
         style.configure('TLabelFrame.Label', background=bg_color, foreground=accent_color)
         style.configure('TFrame', background=bg_color)
-        style.configure('TButton', font=('Segoe UI', 9), padding=8)
+        style.configure('TButton', font=('Segoe UI', 8), padding=4)
         style.map('TButton', background=[('active', accent_color)])
         
         # Стили для прогресс-баров
@@ -84,184 +85,135 @@ class GameAudioStreamServer:
         style.configure('red.Horizontal.TProgressbar', 
                        background='#f38ba8', troughcolor='#313244', borderwidth=0)
         
-        main_frame = ttk.Frame(self.root, padding="20")
+        # Основной фрейм без прокрутки
+        main_frame = ttk.Frame(self.root, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Заголовок с градиентом
+        # Заголовок компактный
         header_frame = tk.Frame(main_frame, bg=bg_color)
-        header_frame.pack(fill=tk.X, pady=(0, 20))
+        header_frame.pack(fill=tk.X, pady=(0, 8))
         
         title_label = tk.Label(header_frame, 
                                text="🎮 Game Audio Stream Server", 
-                               font=('Segoe UI', 18, 'bold'),
+                               font=('Segoe UI', 14, 'bold'),
                                bg=bg_color, fg=accent_color)
-        title_label.pack()
+        title_label.pack(side=tk.LEFT)
         
-        subtitle_label = tk.Label(header_frame,
-                                  text="Высокопроизводительный стриминг аудио",
-                                  font=('Segoe UI', 9),
-                                  bg=bg_color, fg=fg_color)
-        subtitle_label.pack(pady=(5, 0))
+        # Компактная панель настроек в одну строку
+        settings_row = tk.Frame(main_frame, bg=bg_color)
+        settings_row.pack(fill=tk.X, pady=(0, 8))
         
-        # Настройки качества/задержки
-        quality_frame = ttk.LabelFrame(main_frame, text="⚙️ Настройки качества/задержки", padding="15")
-        quality_frame.pack(fill=tk.X, pady=(0, 15))
-        
-        quality_inner = tk.Frame(quality_frame, bg='#313244')
-        quality_inner.pack(fill=tk.X, padx=5, pady=5)
-        
-        tk.Label(quality_inner, text="Профиль задержки:", 
-                font=('Segoe UI', 9), bg='#313244', fg='#cdd6f4').grid(row=0, column=0, sticky=tk.W, padx=(10, 15), pady=10)
+        tk.Label(settings_row, text="Профиль:", 
+                font=('Segoe UI', 8), bg=bg_color, fg=fg_color).pack(side=tk.LEFT, padx=(0, 5))
         self.latency_profile_var = tk.StringVar(value='Низкая')
-        self.latency_combo = ttk.Combobox(quality_inner, textvariable=self.latency_profile_var,
-                                     values=list(LATENCY_PROFILES.keys()), state="readonly", width=18)
-        self.latency_combo.grid(row=0, column=1, padx=5, pady=10)
+        self.latency_combo = ttk.Combobox(settings_row, textvariable=self.latency_profile_var,
+                                     values=list(LATENCY_PROFILES.keys()), state="readonly", width=12)
+        self.latency_combo.pack(side=tk.LEFT, padx=(0, 15))
         self.latency_combo.bind('<<ComboboxSelected>>', self.on_latency_profile_change)
-        
-        # Информация о настройках
-        settings_info = ttk.LabelFrame(main_frame, text="📊 Текущие настройки", padding="15")
-        settings_info.pack(fill=tk.X, pady=(0, 15))
         
         self.settings_info_var = tk.StringVar()
         self.update_settings_info()
-        settings_label = tk.Label(settings_info, textvariable=self.settings_info_var, 
-                                  font=('Consolas', 9), bg='#313244', fg='#a6e3a1',
-                                  justify=tk.LEFT, anchor='w', padx=10, pady=8)
-        settings_label.pack(fill=tk.X)
+        settings_label = tk.Label(settings_row, textvariable=self.settings_info_var, 
+                                  font=('Consolas', 7), bg=bg_color, fg='#a6e3a1')
+        settings_label.pack(side=tk.LEFT)
         
-        # Раздел системного звука
-        system_frame = ttk.LabelFrame(main_frame, text="🎤 Захват системного звука", padding="15")
-        system_frame.pack(fill=tk.X, pady=(0, 15))
+        # Компактная панель устройств и сети
+        device_network_frame = ttk.LabelFrame(main_frame, text="🎤 Устройство и сеть", padding="8")
+        device_network_frame.pack(fill=tk.X, pady=(0, 8))
         
-        system_inner = tk.Frame(system_frame, bg='#313244')
-        system_inner.pack(fill=tk.X, padx=5, pady=5)
+        device_network_inner = tk.Frame(device_network_frame, bg='#313244')
+        device_network_inner.pack(fill=tk.X, padx=3, pady=3)
         
-        tk.Label(system_inner, text="Устройство захвата:", 
-                font=('Segoe UI', 9), bg='#313244', fg='#cdd6f4').grid(row=0, column=0, sticky=tk.W, padx=(10, 10), pady=10)
+        # Устройство захвата
+        tk.Label(device_network_inner, text="Устройство:", 
+                font=('Segoe UI', 8), bg='#313244', fg='#cdd6f4').grid(row=0, column=0, sticky=tk.W, padx=(5, 5), pady=5)
         self.device_var = tk.StringVar()
-        self.device_combo = ttk.Combobox(system_inner, textvariable=self.device_var, 
-                                        state="readonly", width=45)
-        self.device_combo.grid(row=0, column=1, padx=5, sticky=tk.EW, pady=10)
+        self.device_combo = ttk.Combobox(device_network_inner, textvariable=self.device_var, 
+                                        state="readonly", width=30)
+        self.device_combo.grid(row=0, column=1, padx=5, sticky=tk.EW, pady=5)
         
-        refresh_btn = ttk.Button(system_inner, text="🔄 Обновить", 
-                               command=self.refresh_devices)
-        refresh_btn.grid(row=0, column=2, padx=5, pady=10)
+        refresh_btn = ttk.Button(device_network_inner, text="🔄", 
+                               command=self.refresh_devices, width=3)
+        refresh_btn.grid(row=0, column=2, padx=5, pady=5)
         
-        system_inner.columnconfigure(1, weight=1)
-        
-        # Инструкция
-        info_frame = tk.Frame(main_frame, bg='#45475a', relief=tk.FLAT)
-        info_frame.pack(fill=tk.X, pady=(0, 15))
-        
-        info_text = """💡 Для захвата звука из игр:
-  1. Используйте 'Stereo Mix' или 'Что слышно'
-  2. Или установите VoiceMeeter
-  3. Убедитесь, что в игре звук включен"""
-        
-        info_label = tk.Label(info_frame, text=info_text, 
-                             font=('Segoe UI', 9), bg='#45475a', fg='#89b4fa',
-                             justify=tk.LEFT, anchor='w', padx=15, pady=10)
-        info_label.pack(fill=tk.X)
-        
-        # Настройки сети
-        network_frame = ttk.LabelFrame(main_frame, text="🌐 Настройки сети", padding="15")
-        network_frame.pack(fill=tk.X, pady=(0, 15))
-        
-        network_inner = tk.Frame(network_frame, bg='#313244')
-        network_inner.pack(fill=tk.X, padx=5, pady=5)
-        
-        tk.Label(network_inner, text="Multicast группа:", 
-                font=('Segoe UI', 9), bg='#313244', fg='#cdd6f4').grid(row=0, column=0, sticky=tk.W, padx=(10, 10), pady=8)
+        # Сеть
+        tk.Label(device_network_inner, text="Группа:", 
+                font=('Segoe UI', 8), bg='#313244', fg='#cdd6f4').grid(row=0, column=3, sticky=tk.W, padx=(15, 5), pady=5)
         self.group_var = tk.StringVar(value=MULTICAST_GROUP)
-        group_entry = ttk.Entry(network_inner, textvariable=self.group_var, width=18)
-        group_entry.grid(row=0, column=1, padx=5, pady=8)
+        group_entry = ttk.Entry(device_network_inner, textvariable=self.group_var, width=12)
+        group_entry.grid(row=0, column=4, padx=2, pady=5)
         
-        tk.Label(network_inner, text="Порт:", 
-                font=('Segoe UI', 9), bg='#313244', fg='#cdd6f4').grid(row=0, column=2, sticky=tk.W, padx=(20, 10), pady=8)
+        tk.Label(device_network_inner, text="Порт:", 
+                font=('Segoe UI', 8), bg='#313244', fg='#cdd6f4').grid(row=0, column=5, sticky=tk.W, padx=(8, 5), pady=5)
         self.port_var = tk.StringVar(value=str(PORT))
-        port_entry = ttk.Entry(network_inner, textvariable=self.port_var, width=12)
-        port_entry.grid(row=0, column=3, padx=5, pady=8)
+        port_entry = ttk.Entry(device_network_inner, textvariable=self.port_var, width=8)
+        port_entry.grid(row=0, column=6, padx=2, pady=5)
         
-        # Статус
-        self.status_var = tk.StringVar(value="⏸ Готов к захвату игрового звука")
-        status_frame = ttk.LabelFrame(main_frame, text="📡 Статус", padding="15")
-        status_frame.pack(fill=tk.X, pady=(0, 15))
+        device_network_inner.columnconfigure(1, weight=1)
         
-        status_inner = tk.Frame(status_frame, bg='#313244')
-        status_inner.pack(fill=tk.X, padx=5, pady=5)
+        # Компактная панель статуса и статистики в одну строку
+        status_stats_frame = ttk.LabelFrame(main_frame, text="📡 Статус и статистика", padding="8")
+        status_stats_frame.pack(fill=tk.X, pady=(0, 8))
         
-        self.status_label = tk.Label(status_inner, textvariable=self.status_var, 
-                                     font=('Segoe UI', 10, 'bold'), bg='#313244', fg='#89b4fa',
-                                     anchor='w', padx=10, pady=8)
-        self.status_label.pack(fill=tk.X)
+        status_stats_inner = tk.Frame(status_stats_frame, bg='#313244')
+        status_stats_inner.pack(fill=tk.X, padx=3, pady=3)
         
-        # Статистика
-        self.stats_var = tk.StringVar(value="Пакетов отправлено: 0")
-        stats_frame = ttk.LabelFrame(main_frame, text="📈 Статистика", padding="15")
-        stats_frame.pack(fill=tk.X, pady=(0, 15))
+        self.status_var = tk.StringVar(value="⏸ Готов")
+        self.status_label = tk.Label(status_stats_inner, textvariable=self.status_var, 
+                                     font=('Segoe UI', 8, 'bold'), bg='#313244', fg='#89b4fa',
+                                     anchor='w', padx=5, width=15)
+        self.status_label.grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
         
-        stats_inner = tk.Frame(stats_frame, bg='#313244')
-        stats_inner.pack(fill=tk.X, padx=5, pady=5)
+        self.stats_var = tk.StringVar(value="Пакетов: 0")
+        self.stats_label = tk.Label(status_stats_inner, textvariable=self.stats_var,
+                                   font=('Consolas', 8), bg='#313244', fg='#cdd6f4',
+                                   anchor='w', padx=5)
+        self.stats_label.grid(row=0, column=1, sticky=tk.W, padx=5, pady=3)
         
-        self.stats_label = tk.Label(stats_inner, textvariable=self.stats_var,
-                                   font=('Consolas', 10), bg='#313244', fg='#cdd6f4',
-                                   anchor='w', padx=10, pady=8)
-        self.stats_label.pack(fill=tk.X)
-        
-        # Индикатор уровня звука
-        level_frame = ttk.LabelFrame(main_frame, text="🔊 Уровень звука", padding="15")
-        level_frame.pack(fill=tk.X, pady=(0, 20))
+        # Компактный индикатор уровня звука
+        level_frame = ttk.LabelFrame(main_frame, text="🔊 Уровень звука", padding="8")
+        level_frame.pack(fill=tk.X, pady=(0, 8))
         
         level_inner = tk.Frame(level_frame, bg='#313244')
-        level_inner.pack(fill=tk.X, padx=5, pady=5)
+        level_inner.pack(fill=tk.X, padx=3, pady=3)
         
-        self.level_var = tk.StringVar(value="Уровень: 0%")
+        self.level_var = tk.StringVar(value="0%")
         level_text_label = tk.Label(level_inner, textvariable=self.level_var,
-                                   font=('Segoe UI', 10, 'bold'), bg='#313244', fg='#a6e3a1',
-                                   anchor='w', padx=10, pady=(5, 10))
-        level_text_label.pack(fill=tk.X)
+                                   font=('Segoe UI', 9, 'bold'), bg='#313244', fg='#a6e3a1',
+                                   anchor='w', padx=5, width=5)
+        level_text_label.pack(side=tk.LEFT, padx=5)
         
-        # Прогресс-бар для уровня звука с цветовой индикацией
-        progress_frame = tk.Frame(level_inner, bg='#313244')
-        progress_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
+        self.level_progress = ttk.Progressbar(level_inner, mode='determinate', maximum=100, length=400)
+        self.level_progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         
-        self.level_progress = ttk.Progressbar(progress_frame, mode='determinate', maximum=100, length=500)
-        self.level_progress.pack(fill=tk.X)
-        
-        # Цветовые индикаторы уровня
-        level_indicators = tk.Frame(level_inner, bg='#313244')
-        level_indicators.pack(fill=tk.X, padx=10, pady=(5, 0))
-        
-        tk.Label(level_indicators, text="Тихо", font=('Segoe UI', 7), bg='#313244', fg='#6c7086').pack(side=tk.LEFT)
-        tk.Label(level_indicators, text="Норма", font=('Segoe UI', 7), bg='#313244', fg='#6c7086').pack(side=tk.LEFT, padx=150)
-        tk.Label(level_indicators, text="Громко", font=('Segoe UI', 7), bg='#313244', fg='#6c7086').pack(side=tk.RIGHT)
-        
-        # Кнопки
+        # Кнопки управления - компактные
         button_frame = tk.Frame(main_frame, bg='#1e1e2e')
-        button_frame.pack(fill=tk.X, pady=(10, 0))
+        button_frame.pack(fill=tk.X, pady=(5, 0))
         
-        self.start_btn = tk.Button(button_frame, text="▶️ Начать стрим", 
+        button_container = tk.Frame(button_frame, bg='#1e1e2e')
+        button_container.pack(expand=True)
+        
+        self.start_btn = tk.Button(button_container, text="▶️ Начать стрим", 
                                    command=self.start_stream,
-                                   font=('Segoe UI', 11, 'bold'),
+                                   font=('Segoe UI', 10, 'bold'),
                                    bg='#a6e3a1', fg='#1e1e2e',
                                    activebackground='#94e2d5', activeforeground='#1e1e2e',
-                                   relief=tk.FLAT, padx=20, pady=12,
-                                   cursor='hand2')
-        self.start_btn.pack(side=tk.LEFT, padx=(0, 15))
+                                   relief=tk.FLAT, padx=20, pady=10,
+                                   cursor='hand2', width=18)
+        self.start_btn.pack(side=tk.LEFT, padx=(0, 10))
         
-        self.stop_btn = tk.Button(button_frame, text="⏹️ Остановить", 
+        self.stop_btn = tk.Button(button_container, text="⏹️ Остановить", 
                                  command=self.stop_stream, state=tk.DISABLED,
-                                 font=('Segoe UI', 11, 'bold'),
+                                 font=('Segoe UI', 10, 'bold'),
                                  bg='#f38ba8', fg='#1e1e2e',
                                  activebackground='#eba0ac', activeforeground='#1e1e2e',
-                                 relief=tk.FLAT, padx=20, pady=12,
-                                 cursor='hand2', disabledforeground='#6c7086')
+                                 relief=tk.FLAT, padx=20, pady=10,
+                                 cursor='hand2', disabledforeground='#6c7086', width=18)
         self.stop_btn.pack(side=tk.LEFT)
     
     def update_settings_info(self):
         """Обновить информацию о настройках"""
-        info_text = f"""Частота: {self.sample_rate} Hz | Каналы: {CHANNELS} | Формат: {FORMAT} | Размер чанка: {self.chunk_size}
-ВАЖНО: Эти настройки должны совпадать на клиенте!"""
+        info_text = f"{self.sample_rate}Hz | {CHANNELS}ch | {FORMAT} | chunk:{self.chunk_size}"
         self.settings_info_var.set(info_text)
     
     def on_latency_profile_change(self, event=None):
@@ -352,8 +304,11 @@ class GameAudioStreamServer:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 32768)  # Уменьшенный буфер отправки
-            # Отключаем алгоритм Нейгла для UDP (не влияет, но для ясности)
-            self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)  # Отключаем loopback
+            # Включаем loopback для multicast (чтобы работало на одном компьютере)
+            self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
+            
+            multicast_addr = (self.group_var.get(), int(self.port_var.get()))
+            print(f"[DEBUG] Сервер настроен: отправка на {multicast_addr[0]}:{multicast_addr[1]}")
             
             self.running = True
             self.packet_count = 0
@@ -380,7 +335,7 @@ class GameAudioStreamServer:
             )
             self.stream.start()
             
-            self.status_var.set("▶️ Стриминг игрового звука активен")
+            self.status_var.set("▶️ Активен")
             self.status_label.config(fg='#a6e3a1')  # Зеленый цвет для активного статуса
             self.start_btn.config(state=tk.DISABLED)
             self.stop_btn.config(state=tk.NORMAL)
@@ -418,18 +373,26 @@ class GameAudioStreamServer:
     def send_audio_data(self):
         """Отправка аудио данных - оптимизировано"""
         multicast_addr = (self.group_var.get(), int(self.port_var.get()))
+        print(f"[DEBUG] Начало отправки на {multicast_addr[0]}:{multicast_addr[1]}")
         
         while self.running:
             try:
                 audio_data = self.audio_queue.get(timeout=0.01)  # Уменьшенный таймаут
                 # Используем sendto без проверок для максимальной скорости
-                self.sock.sendto(audio_data, multicast_addr)
+                bytes_sent = self.sock.sendto(audio_data, multicast_addr)
                 self.packet_count += 1
+                
+                # Отладочная информация для первых пакетов
+                if self.packet_count <= 5:
+                    print(f"[DEBUG] Отправлен пакет #{self.packet_count}: {bytes_sent} байт на {multicast_addr}")
+                    
             except queue.Empty:
                 continue
             except Exception as e:
                 if self.running:
-                    print(f"Send error: {e}")
+                    print(f"[ERROR] Send error: {e}")
+                    import traceback
+                    traceback.print_exc()
     
     def update_stats(self):
         """Обновление статистики с индикатором уровня"""
@@ -438,14 +401,16 @@ class GameAudioStreamServer:
             if elapsed > 0:
                 speed = self.packet_count / elapsed
                 drop_rate = (self.dropped_packets / (self.packet_count + self.dropped_packets) * 100) if (self.packet_count + self.dropped_packets) > 0 else 0
-                stats_text = f"Пакетов отправлено: {self.packet_count} ({speed:.1f}/сек)"
+                stats_text = f"Пакетов: {self.packet_count} ({speed:.1f}/с"
                 if self.dropped_packets > 0:
-                    stats_text += f" | Пропущено: {self.dropped_packets} ({drop_rate:.1f}%)"
+                    stats_text += f", пропущено: {self.dropped_packets})"
+                else:
+                    stats_text += ")"
                 self.stats_var.set(stats_text)
                 
                 # Обновляем индикатор уровня звука с цветовой индикацией
                 level_percent = int(self.last_audio_level * 100)
-                self.level_var.set(f"Уровень: {level_percent}%")
+                self.level_var.set(f"{level_percent}%")
                 self.level_progress['value'] = level_percent
                 
                 # Цветовая индикация уровня звука
@@ -467,7 +432,7 @@ class GameAudioStreamServer:
         if hasattr(self, 'sock'):
             self.sock.close()
         
-        self.status_var.set("⏸ Стриминг остановлен")
+        self.status_var.set("⏸ Готов")
         self.status_label.config(fg='#89b4fa')  # Синий цвет для остановленного статуса
         self.start_btn.config(state=tk.NORMAL)
         self.stop_btn.config(state=tk.DISABLED)
